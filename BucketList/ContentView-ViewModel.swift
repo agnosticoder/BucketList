@@ -16,7 +16,8 @@ extension ContentView {
         private(set) var locations: [Location]
         var selectedPlace: Location?
         var isUnlocked = false
-        
+        var isHybridStyle = false
+
         let savePath = URL.documentsDirectory.appending(path: "savedPlaces")
         
         init() {
@@ -50,6 +51,12 @@ extension ContentView {
                 locations[index] = location
                 save()
             }
+        }
+        
+        func deleteLocation (location: Location) {
+            guard let index = locations.firstIndex(of: location) else { return }
+            locations.remove(at: index)
+            save()
         }
         
         func authenticate() {

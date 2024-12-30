@@ -10,7 +10,6 @@ import MapKit
 
 struct ContentView: View {
     @State private var viewModel = ViewModel()
-    @State private var isHybridStyle = false
 
     var body: some View {
         if viewModel.isUnlocked {
@@ -30,7 +29,7 @@ struct ContentView: View {
                             }
                         }
                     }
-                    .mapStyle(isHybridStyle ? .hybrid : .standard)
+                    .mapStyle(viewModel.isHybridStyle ? .hybrid : .standard)
                     .onTapGesture { position in
                         if let coordinate = proxy.convert(position, from: .local) {
                             viewModel.addLocation(at: coordinate)
@@ -38,7 +37,7 @@ struct ContentView: View {
                     }
                 }
                 VStack {
-                    Picker("Map Style", selection: $isHybridStyle) {
+                    Picker("Map Style", selection: $viewModel.isHybridStyle) {
                             Text("Standard").tag(false)
                             Text("hybrid").tag(true)
                         }
@@ -51,9 +50,7 @@ struct ContentView: View {
                 .padding()
             }
             .sheet(item: $viewModel.selectedPlace) { place in
-                EditView(location: place) { newLocation in
-                    viewModel.updateLocation(location: newLocation)
-                }
+                EditView(location: place, onSave: viewModel.updateLocation, onDelete: viewModel.deleteLocation)
             }
         } else {
             Button("Unlock places", action: viewModel.authenticate)

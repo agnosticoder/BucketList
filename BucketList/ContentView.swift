@@ -6,16 +6,62 @@
 //
 
 import SwiftUI
+import MapKit
 
 struct ContentView: View {
+    @State private var viewModel = ViewModel()
+    @State private var isHybridStyle = false
+
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
+        if viewModel.isUnlocked {
+            ZStack(alignment: .topLeading) {
+                MapReader { proxy in
+                    Map() {
+                        ForEach(viewModel.locations) { location in
+                            Annotation(location.name, coordinate: location.coordinate) {
+                                Image(systemName: "star.circle")
+                                    .resizable()
+                                    .foregroundStyle(.red)
+                                    .frame(width: 44, height: 44)
+                                    .background(.white)
+                                    .clipShape(.circle)
+                                    .simultaneousGesture(LongPressGesture(minimumDuration: 1).onEnded { _ in viewModel.selectedPlace = location
+                                    })
+                            }
+                        }
+                    }
+                    .mapStyle(isHybridStyle ? .hybrid : .standard)
+                    .onTapGesture { position in
+                        if let coordinate = proxy.convert(position, from: .local) {
+                            viewModel.addLocation(at: coordinate)
+                        }
+                    }
+                }
+                VStack {
+                    Picker("Map Style", selection: $isHybridStyle) {
+                            Text("Standard").tag(false)
+                            Text("hybrid").tag(true)
+                        }
+                        .pickerStyle(SegmentedPickerStyle())
+                        .frame(width: 200)
+                        .padding(2)
+                        .background(Color.white.opacity(0.8))
+                        .cornerRadius(8)
+                    }
+                .padding()
+            }
+            .sheet(item: $viewModel.selectedPlace) { place in
+                EditView(location: place) { newLocation in
+                    viewModel.updateLocation(location: newLocation)
+                }
+            }
+        } else {
+            Button("Unlock places", action: viewModel.authenticate)
+                .padding()
+                .background(.blue)
+                .foregroundStyle(.white)
+                .clipShape(.capsule)
         }
-        .padding()
     }
 }
 
